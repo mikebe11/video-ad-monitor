@@ -13,9 +13,13 @@ function observerCallback(mutationList) {
 
                 for (let i = 0; i < videos.length; i++) {
                     if (videos[i].attributes.getNamedItem('src') !== null && videos[i].volume > 0) {
-                        console.log('dropping volume');
+                        console.log('dropping volume and reducing opacity');
 
                         videos[i].volume = 0;
+
+                        const vidContainer = document.getElementById('movie_player');
+
+                        vidContainer.style.opacity = 0.05;
 
                         break;
                     }
@@ -40,6 +44,14 @@ function observerCallback(mutationList) {
 
                     closeButtonContainer[i].click();
                 }
+            }
+
+            if (mutation.target.childElementCount === 0) {
+                console.log('restoring opacity');
+
+                const vidContainer = document.getElementById('movie_player');
+
+                vidContainer.style.opacity = 1;
             }
         }
     }
