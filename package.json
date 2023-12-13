@@ -1,13 +1,13 @@
 {
   "name": "video_ad_monitor",
-  "version": "3.1.0",
-  "description": "Mutes the sound during non-skippable ads, closes banners, and clicks the skip now button when present.",
+  "version": "3.2.0",
+  "description": "Mutes the sound, reduces video opacity, and blurs the video during non-skippable ads. Closes banners and clicks the skip now button when present.",
   "main": "video.js",
   "license": "ISC",
   "scripts": {
     "build": "web-ext build --overwrite-dest"
   },
   "devDependencies": {
-    "web-ext": "^7.7.0"
+    "web-ext": "^7.9.0"
   }
 }
