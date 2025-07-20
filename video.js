@@ -1,6 +1,7 @@
 "use strict";
 
 let observer = null;
+let skipNowObserver = null;
 
 /**
  * @param {Object} mutationList
@@ -8,32 +9,60 @@ let observer = null;
 function observerCallback(mutationList) {
     for (const mutation of mutationList) {
         if (mutation.target.tagName === 'DIV' && mutation.target.className.includes('video-ads')) {
-            if (mutation.target.innerHTML.includes('ytp-ad-preview-container')) {
+            if (
+                mutation.target.innerHTML.includes('ytp-ad-player-overlay-layout') ||
+                mutation.target.innerHTML.includes('ytp-ad-preview-container')
+            ) {
                 const videos = document.getElementsByTagName('video');
 
                 for (let i = 0; i < videos.length; i++) {
                     if (videos[i].attributes.getNamedItem('src') !== null && videos[i].volume > 0) {
-                        console.log('dropping volume, reducing blur and opacity');
+                        console.debug('dropping volume, reducing blur and opacity');
 
                         videos[i].volume = 0;
 
                         const vidContainer = document.getElementById('movie_player');
 
-                        vidContainer.style.filter = 'blur(10px)';
-                        vidContainer.style.opacity = 0.05;
+                        vidContainer.style.opacity = 0;
 
                         break;
                     }
                 }
             }
 
+            // Original element. Might not apply anymore.
             if (mutation.target.innerHTML.includes('ytp-ad-skip-button-container')) {
-                const skipNow = document.getElementsByClassName('ytp-ad-skip-button-container');
+                const skipNowOld = document.getElementsByClassName('ytp-ad-skip-button-container');
+
+                if (skipNowOld.length > 0) {
+                    console.debug('skipping');
+
+                    skipNowOld[0].click();
+                }
+            }
+
+
+            if (mutation.target.innerHTML.includes('ytp-skip-ad-button')) {
+                const skipNow = document.getElementsByClassName('ytp-skip-ad-button');
 
                 if (skipNow.length > 0) {
-                    console.log('skipping');
+                    if (skipNow[0].style.display === "none") {
+                        if (skipNowObserver === null) {
+                            skipNowObserver = new MutationObserver(skipNowObserverCallback);
+                        }
 
-                    skipNow[0].click();
+                        skipNowObserver.observe(skipNow[0], { attributes: true, childList: false, subtree: false, attributeFilter: ['style'] });
+                    }
+
+                    if (skipNow[0].style.display !== "none") {
+                        console.debug('skipping');
+
+                        if (skipNowObserver !== null) {
+                            skipNowObserver = null;
+                        }
+
+                        skipNow[0].click();
+                    }
                 }
             }
 
@@ -41,14 +70,14 @@ function observerCallback(mutationList) {
                 const closeButtonContainer = document.getElementsByClassName('ytp-ad-overlay-close-container');
 
                 for (let i = 0; i < closeButtonContainer.length; i++) {
-                    console.log('closing');
+                    console.debug('closing');
 
                     closeButtonContainer[i].click();
                 }
             }
 
             if (mutation.target.childElementCount === 0) {
-                console.log('restoring blur and opacity');
+                console.debug('restoring blur and opacity');
 
                 const vidContainer = document.getElementById('movie_player');
 
@@ -59,13 +88,36 @@ function observerCallback(mutationList) {
     }
 }
 
+/**
+ * @param {Object} mutationList
+ */
+function skipNowObserverCallback(mutationList) {
+    for (const mutation of mutationList) {
+        if (mutation.target.tagName === 'BUTTON' && mutation.target.className.includes('ytp-skip-ad-button')) {
+
+            const skipNow = document.getElementsByClassName('ytp-skip-ad-button');
+
+            if (skipNow.length > 0 && skipNow[0].style.display !== "none") {
+                const vidContainer = document.getElementById('movie_player');
+
+                vidContainer.style.opacity = 1;
+                vidContainer.style.filter = 'blur(10px) sepia(1)';
+
+                if (skipNowObserver !== null) {
+                    skipNowObserver.disconnect();
+                }
+            }
+        }
+    }
+}
+
 function startObserver() {
     const component = document.getElementById('movie_player');
 
     if (component === null) {
-        console.error("didn't find the movie player");
+        console.debug("didn't find the movie player");
     } else {
-        console.log('starting');
+        console.debug('starting');
 
         observer = new MutationObserver(observerCallback);
 
@@ -87,7 +139,7 @@ browser.runtime.onMessage.addListener((request) => {
             browser.runtime.sendMessage({m:'starting observer', tid:request.tabID});
         }
     } else if (observer !== null) {
-        console.log('stopping');
+        console.debug('stopping');
 
         observer.disconnect();
 

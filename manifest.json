@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "Video Ad Monitor",
-  "version": "3.2",
-  "description": "Mutes the sound, reduces video opacity, and blurs the video during non-skippable ads. Closes banners and clicks the skip now button when present.",
+  "version": "3.3",
+  "description": "Mutes the sound, reduces video opacity, and blurs the video during non-skippable ads. Closes banners when present.",
   "icons": {
     "48": "off.png",
     "48": "on.png"
